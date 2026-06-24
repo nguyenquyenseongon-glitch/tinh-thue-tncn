@@ -3,18 +3,492 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Kế toán SEONGON — Công cụ thuế</title>
-<meta http-equiv="refresh" content="0; url=BTVN%20Bu%E1%BB%95i%201/" />
-<script>location.replace("BTVN%20Bu%E1%BB%95i%201/");</script>
+<title>Tính thuế TNCN 2026 — Kế toán SEONGON</title>
+<meta name="description" content="Công cụ tính thuế thu nhập cá nhân (TNCN) online theo quy định mới 2026: giảm trừ gia cảnh 15,5 triệu, biểu thuế lũy tiến 5 bậc. Của Kế toán SEONGON." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
 <style>
-  body{font-family:system-ui,-apple-system,"Be Vietnam Pro",sans-serif;background:#EDF0F6;color:#1E2330;display:grid;place-items:center;min-height:100vh;margin:0;text-align:center;padding:24px;}
-  a{color:#3E63DD;font-weight:600;}
+  /* ===== Palette: lấy từ gradient logo SEONGON (xanh ngọc → xanh dương → tím → hồng) ===== */
+  :root{
+    --ground:   #EDF0F6;   /* nền giấy mát, ngả lạnh */
+    --surface:  #FFFFFF;   /* thẻ */
+    --surface-2:#F4F6FC;   /* ô phụ */
+    --text:     #1E2330;   /* mực xanh-đen */
+    --muted:    #5E6675;   /* chữ phụ */
+    --accent:   #3E63DD;   /* xanh dương-tím (màu chính lấy từ logo) */
+    --accent-deep:#2C49B8;
+    --accent-soft:#E7ECFC;
+    --teal:     #0FA8A2;   /* xanh ngọc (đầu dải logo) — dùng cho số dương */
+    --pink:     #E5186B;   /* hồng magenta (cuối dải logo) — nhấn số thuế */
+    --pink-soft:#FCE7F0;
+    --line:     #DCE1EB;
+    --brand-grad: linear-gradient(135deg,#0FA8A2 0%,#2E7FE0 36%,#4A3FB5 66%,#C2155C 100%);
+    --radius:   14px;
+    --shadow:   0 14px 40px -22px rgba(30,35,48,.5);
+    --maxw:     1120px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;background:var(--ground);color:var(--text);
+    font-family:"Be Vietnam Pro",system-ui,sans-serif;font-size:16px;line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{margin:0;line-height:1.15;letter-spacing:-.01em;}
+  .num{font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums;}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px;}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px;}
+
+  /* ===== Header ===== */
+  header{background:var(--surface);border-bottom:1px solid var(--line);}
+  .topbar{display:flex;align-items:center;justify-content:space-between;height:72px;gap:16px;}
+  .brand{display:flex;align-items:center;gap:14px;min-width:0;}
+  .logo-img{height:38px;width:auto;display:block;}
+  .divider{width:1px;height:34px;background:var(--line);flex-shrink:0;}
+  .brand-sub{display:flex;flex-direction:column;line-height:1.15;min-width:0;}
+  .brand-sub b{font-size:15px;font-weight:800;}
+  .brand-sub span{font-size:11px;color:var(--muted);font-family:"JetBrains Mono",monospace;letter-spacing:.12em;text-transform:uppercase;}
+  .badge-year{font-family:"JetBrains Mono",monospace;font-size:12px;font-weight:700;color:var(--accent);background:var(--accent-soft);border:1px solid #C5D0F7;padding:6px 12px;border-radius:999px;white-space:nowrap;}
+
+  /* ===== Hero ===== */
+  .hero{padding:46px 0 26px;}
+  .eyebrow{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:9px;}
+  .eyebrow::before{content:"";width:24px;height:3px;border-radius:2px;background:var(--brand-grad);}
+  .hero h1{font-size:clamp(28px,4vw,42px);font-weight:800;max-width:760px;}
+  .hero p{color:var(--muted);font-size:17px;margin:14px 0 0;max-width:640px;}
+
+  /* mode tabs: tháng / năm */
+  .mode-tabs{display:flex;align-items:center;gap:14px;margin:22px 0 2px;flex-wrap:wrap;}
+  .mt-label{font-size:13px;font-weight:600;color:var(--muted);font-family:"JetBrains Mono",monospace;letter-spacing:.08em;text-transform:uppercase;}
+  .mt-group{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px;box-shadow:var(--shadow);}
+  .mt{border:none;background:transparent;font-family:inherit;font-size:14.5px;font-weight:700;color:var(--muted);padding:10px 26px;border-radius:999px;cursor:pointer;transition:color .15s;}
+  .mt.on{background:var(--brand-grad);color:#fff;box-shadow:0 6px 16px -6px rgba(74,63,181,.6);}
+
+  /* legal note */
+  .legal{display:flex;gap:12px;background:var(--accent-soft);border:1px solid #C9D3F8;border-left:4px solid var(--accent);border-radius:12px;padding:14px 16px;margin:24px 0 8px;font-size:13.5px;color:#2A386B;}
+  .legal b{color:#1E2C5E;}
+  .legal a{color:var(--accent);font-weight:600;}
+
+  /* ===== Layout ===== */
+  .app{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:22px;padding:14px 0 70px;align-items:start;}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);}
+  .card-head{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .card-head h2{font-size:16px;font-weight:700;}
+  .card-head .hint{font-size:12.5px;color:var(--muted);}
+  .card-body{padding:22px;}
+
+  /* ===== Form ===== */
+  .field{margin-bottom:20px;}
+  .field:last-child{margin-bottom:0;}
+  label.lbl{display:block;font-size:14px;font-weight:600;margin-bottom:7px;}
+  label.lbl .opt{font-weight:400;color:var(--muted);font-size:12.5px;}
+  .money-input{position:relative;}
+  .money-input input{width:100%;font-family:"JetBrains Mono",monospace;font-size:18px;font-weight:600;text-align:right;
+    padding:13px 44px 13px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);color:var(--text);transition:border-color .15s,box-shadow .15s;}
+  .money-input input:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px var(--accent-soft);outline:none;}
+  .money-input .unit{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-weight:600;font-family:"JetBrains Mono",monospace;pointer-events:none;}
+  .sublbl{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px;}
+  .bh-breakdown{display:flex;gap:8px;margin-top:10px;}
+  .bh-breakdown span{flex:1;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:8px 6px;font-size:11px;color:var(--muted);display:flex;flex-direction:column;gap:3px;text-align:center;}
+  .bh-breakdown b{font-family:"JetBrains Mono",monospace;font-size:12.5px;color:var(--text);font-weight:700;}
+
+  .seg{display:flex;gap:8px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:4px;}
+  .seg button{flex:1;border:none;background:transparent;font-family:inherit;font-size:13.5px;font-weight:600;color:var(--muted);padding:9px;border-radius:7px;cursor:pointer;transition:all .15s;}
+  .seg button.on{background:var(--accent);color:#fff;box-shadow:0 2px 8px -2px rgba(62,99,221,.5);}
+
+  .stepper{display:flex;align-items:center;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;background:var(--surface-2);}
+  .stepper button{width:46px;height:46px;border:none;background:transparent;font-size:22px;color:var(--accent);cursor:pointer;font-weight:700;transition:background .15s;}
+  .stepper button:hover{background:var(--accent-soft);}
+  .stepper input{width:64px;height:46px;border:none;border-left:1px solid var(--line);border-right:1px solid var(--line);text-align:center;font-family:"JetBrains Mono",monospace;font-size:18px;font-weight:700;background:#fff;color:var(--text);}
+
+  .adv-toggle{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;color:var(--accent);cursor:pointer;user-select:none;margin-top:4px;}
+  .adv-toggle .chev{transition:transform .2s;}
+  .adv-toggle.open .chev{transform:rotate(90deg);}
+  .adv{display:none;margin-top:16px;padding-top:18px;border-top:1px dashed var(--line);}
+  .adv.show{display:block;}
+  .adv .two{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .adv .money-input input{font-size:15px;padding:11px 40px 11px 12px;}
+
+  /* ===== Results ===== */
+  .stat-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;}
+  .stat{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:16px 18px;}
+  .stat.hero-stat{grid-column:1/-1;background:var(--brand-grad);border-color:transparent;color:#fff;box-shadow:0 12px 30px -14px rgba(74,63,181,.7);}
+  .stat .k{font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;}
+  .stat.hero-stat .k{color:rgba(255,255,255,.85);}
+  .stat .v{font-family:"JetBrains Mono",monospace;font-size:22px;font-weight:700;letter-spacing:-.02em;}
+  .stat.hero-stat .v{font-size:30px;}
+  .stat .sub{font-size:12px;color:var(--muted);margin-top:4px;}
+  .stat.hero-stat .sub{color:rgba(255,255,255,.85);}
+  .stat.net .v{color:var(--teal);}
+
+  /* bracket table */
+  .tbl-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:6px 0 12px;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  thead th{text-align:right;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:700;padding:0 8px 10px;border-bottom:2px solid var(--line);}
+  thead th:first-child{text-align:left;}
+  tbody td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:right;font-family:"JetBrains Mono",monospace;}
+  tbody td:first-child{text-align:left;font-family:"Be Vietnam Pro",sans-serif;font-weight:500;}
+  tbody tr.zero{opacity:.4;}
+  tbody tr.active td:first-child::before{content:"●";color:var(--accent);font-size:9px;margin-right:7px;vertical-align:middle;}
+  .rate-pill{display:inline-block;font-family:"JetBrains Mono",monospace;font-size:12px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:2px 8px;border-radius:6px;}
+  tfoot td{padding:13px 8px 0;font-weight:700;font-family:"JetBrains Mono",monospace;text-align:right;font-size:15px;}
+  tfoot td:first-child{text-align:left;font-family:"Be Vietnam Pro",sans-serif;}
+
+  .breakdown{margin-top:20px;padding-top:18px;border-top:1px solid var(--line);}
+  .brk-line{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;font-size:14px;}
+  .brk-line .lab{color:var(--muted);}
+  .brk-line .val{font-family:"JetBrains Mono",monospace;font-weight:600;}
+  .brk-line.minus .val{color:var(--pink);}
+  .brk-line.total{border-top:1px dashed var(--line);margin-top:6px;padding-top:12px;font-size:15px;font-weight:700;}
+
+  .actions{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap;}
+  .btn{font-family:inherit;font-weight:700;font-size:14px;border:none;cursor:pointer;padding:12px 18px;border-radius:10px;display:inline-flex;align-items:center;gap:8px;transition:transform .12s,background .15s;}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-primary:hover{background:var(--accent-deep);transform:translateY(-1px);}
+  .btn-ghost{background:var(--surface);color:var(--text);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+
+  .disclaimer{font-size:12.5px;color:var(--muted);margin-top:26px;padding:16px 18px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;line-height:1.6;}
+  .disclaimer b{color:var(--text);}
+
+  footer{border-top:1px solid var(--line);background:var(--surface);padding:22px 0;color:var(--muted);font-size:13px;}
+  .foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center;}
+
+  @media(max-width:880px){
+    .app{grid-template-columns:1fr;}
+    .topbar{height:64px;}
+    .logo-img{height:32px;}
+  }
+  @media print{
+    header .badge-year,.actions,.adv-toggle,footer,.legal{display:none;}
+    body{background:#fff;}
+    .card{box-shadow:none;}
+  }
 </style>
 </head>
 <body>
-  <div>
-    <p>Đang chuyển tới công cụ tính thuế TNCN…</p>
-    <p><a href="BTVN%20Bu%E1%BB%95i%201/">Bấm vào đây nếu trang không tự chuyển</a></p>
+
+<header>
+  <div class="wrap topbar">
+    <div class="brand">
+      <img class="logo-img" src="logo-seongon.png" alt="SEONGON" />
+      <span class="divider"></span>
+      <div class="brand-sub"><b>Kế toán</b><span>Công cụ thuế</span></div>
+    </div>
+    <span class="badge-year">Áp dụng 2026</span>
   </div>
+</header>
+
+<div class="wrap">
+  <section class="hero">
+    <p class="eyebrow">Thuế thu nhập cá nhân</p>
+    <h1>Tính thuế TNCN từ tiền lương, tiền công</h1>
+    <p>Nhập thu nhập và thông tin giảm trừ — công cụ tự tính thuế theo biểu lũy tiến và chỉ rõ số thuế ở từng bậc. Dành cho cá nhân cư trú, tính theo tháng.</p>
+  </section>
+
+  <div class="legal">
+    <span>📌</span>
+    <div>Áp dụng quy định <b>mới nhất từ 01/01/2026</b>: giảm trừ bản thân <b>15,5 triệu/tháng</b>, mỗi người phụ thuộc <b>6,2 triệu/tháng</b> (Nghị quyết 110/2025/UBTVQH15), biểu thuế lũy tiến <b>5 bậc</b>. Bạn có thể tự sửa mức giảm trừ ở mục “Tùy chỉnh”.</div>
+  </div>
+
+  <div class="mode-tabs" id="modeTabs">
+    <span class="mt-label">Kỳ tính thuế</span>
+    <div class="mt-group" role="tablist">
+      <button type="button" class="mt on" data-period="month">Theo tháng</button>
+      <button type="button" class="mt" data-period="year">Theo năm</button>
+    </div>
+  </div>
+
+  <main class="app">
+    <!-- ============ FORM ============ -->
+    <section class="card" aria-label="Thông tin tính thuế">
+      <div class="card-head"><h2>Thông tin của bạn</h2><span class="hint" id="unitHint">Đơn vị: đồng/tháng</span></div>
+      <div class="card-body">
+
+        <div class="field">
+          <label class="lbl" for="income" id="incomeLbl">Tổng thu nhập chịu thuế / tháng</label>
+          <div class="money-input">
+            <input id="income" inputmode="numeric" value="30.000.000" aria-describedby="income-h" />
+            <span class="unit">đ</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="lbl">Bảo hiểm bắt buộc (BHXH, BHYT, BHTN)</label>
+          <div class="seg" id="bhMode" role="tablist">
+            <button type="button" class="on" data-mode="auto">Theo lương đóng BH</button>
+            <button type="button" data-mode="manual">Nhập số tiền</button>
+          </div>
+
+          <div id="bhAutoBox" style="margin-top:12px;">
+            <label class="sublbl" for="bhBase">Mức lương đóng BHXH</label>
+            <div class="money-input">
+              <input id="bhBase" inputmode="numeric" value="30.000.000" />
+              <span class="unit">đ</span>
+            </div>
+            <div class="bh-breakdown">
+              <span>BHXH 8%<b id="bhXH" class="num">0 đ</b></span>
+              <span>BHYT 1,5%<b id="bhYT" class="num">0 đ</b></span>
+              <span>BHTN 1%<b id="bhTN" class="num">0 đ</b></span>
+            </div>
+            <p class="hint" style="margin-top:8px;">Mặc định bằng thu nhập — sửa lại nếu công ty đóng BH trên mức lương khác. Cá nhân đóng tổng <b>10,5%</b>.</p>
+          </div>
+
+          <div class="money-input" id="bhManualBox" style="margin-top:10px;display:none;">
+            <input id="bhManual" inputmode="numeric" value="0" />
+            <span class="unit">đ</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="lbl">Số người phụ thuộc</label>
+          <div class="stepper">
+            <button type="button" id="depMinus" aria-label="Giảm">−</button>
+            <input id="deps" class="num" value="0" inputmode="numeric" aria-label="Số người phụ thuộc" />
+            <button type="button" id="depPlus" aria-label="Tăng">+</button>
+          </div>
+        </div>
+
+        <div class="adv-toggle" id="advToggle" role="button" tabindex="0">
+          <span class="chev">▸</span> Tùy chỉnh mức giảm trừ
+        </div>
+        <div class="adv" id="adv">
+          <div class="two">
+            <div class="field" style="margin:0;">
+              <label class="lbl" for="selfDed">Giảm trừ bản thân</label>
+              <div class="money-input"><input id="selfDed" inputmode="numeric" value="15.500.000" /><span class="unit">đ</span></div>
+            </div>
+            <div class="field" style="margin:0;">
+              <label class="lbl" for="depDed">Giảm trừ / người PT</label>
+              <div class="money-input"><input id="depDed" inputmode="numeric" value="6.200.000" /><span class="unit">đ</span></div>
+            </div>
+          </div>
+          <p class="hint" style="margin-top:10px;">Mặc định theo Nghị quyết 110/2025, tự đổi theo kỳ (tháng/năm). Sửa lại nếu cần tính cho trường hợp khác.</p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============ RESULTS ============ -->
+    <section class="card" aria-label="Kết quả">
+      <div class="card-head"><h2>Kết quả tính thuế</h2><span class="hint" id="effRate">—</span></div>
+      <div class="card-body">
+
+        <div class="stat-row">
+          <div class="stat hero-stat">
+            <div class="k" id="rTaxK">Thuế TNCN phải nộp / tháng</div>
+            <div class="v num" id="rTax">0 đ</div>
+            <div class="sub" id="rTaxYear">Cả năm: 0 đ</div>
+          </div>
+          <div class="stat net">
+            <div class="k">Lương thực nhận (Net)</div>
+            <div class="v num" id="rNet">0 đ</div>
+          </div>
+          <div class="stat">
+            <div class="k">Thu nhập tính thuế</div>
+            <div class="v num" id="rTaxable">0 đ</div>
+          </div>
+        </div>
+
+        <div class="breakdown" id="breakdown">
+          <div class="brk-line"><span class="lab">Tổng thu nhập</span><span class="val num" id="bIncome">0 đ</span></div>
+          <div class="brk-line minus"><span class="lab">− Bảo hiểm bắt buộc (cá nhân đóng)</span><span class="val num" id="bIns">0 đ</span></div>
+          <div class="brk-line minus"><span class="lab">− Giảm trừ bản thân</span><span class="val num" id="bSelf">0 đ</span></div>
+          <div class="brk-line minus"><span class="lab" id="bDepLab">− Giảm trừ người phụ thuộc</span><span class="val num" id="bDep">0 đ</span></div>
+          <div class="brk-line total"><span class="lab">= Thu nhập tính thuế</span><span class="val num" id="bTaxable">0 đ</span></div>
+        </div>
+
+        <div style="margin-top:24px;">
+          <div class="tbl-title">Chi tiết thuế theo từng bậc (biểu 5 bậc 2026)</div>
+          <table>
+            <thead>
+              <tr><th>Bậc — Thu nhập tính thuế/tháng</th><th>Thuế suất</th><th>Tiền thuế</th></tr>
+            </thead>
+            <tbody id="brkBody"></tbody>
+            <tfoot>
+              <tr><td>Tổng thuế TNCN</td><td></td><td id="brkTotal">0 đ</td></tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" id="printBtn">🖨️ In / Lưu PDF</button>
+          <button class="btn btn-ghost" id="resetBtn">↺ Nhập lại</button>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <div class="disclaimer">
+    <b>Lưu ý:</b> Công cụ tính cho <b>cá nhân cư trú</b> có thu nhập từ <b>tiền lương, tiền công</b>, theo kỳ tính thuế tháng. Kết quả mang tính tham khảo,
+    chưa bao gồm các khoản thu nhập miễn thuế đặc thù, làm thêm giờ được miễn, hay trần đóng bảo hiểm bắt buộc.
+    Vui lòng đối chiếu quy định hiện hành khi quyết toán. <br>
+    Căn cứ: Nghị quyết 110/2025/UBTVQH15 (giảm trừ gia cảnh) &amp; biểu thuế lũy tiến từng phần 5 bậc áp dụng từ kỳ tính thuế 2026.
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <span>© 2026 Kế toán SEONGON — Công cụ tính thuế TNCN</span>
+    <span class="num">Cập nhật biểu thuế 2026</span>
+  </div>
+</footer>
+
+<script>
+/* ===== Biểu thuế lũy tiến 5 bậc — áp dụng từ kỳ tính thuế 2026 ===== */
+const BRACKETS = [
+  {floor:0,           ceil:10_000_000,  rate:0.05},
+  {floor:10_000_000,  ceil:30_000_000,  rate:0.10},
+  {floor:30_000_000,  ceil:60_000_000,  rate:0.20},
+  {floor:60_000_000,  ceil:100_000_000, rate:0.30},
+  {floor:100_000_000, ceil:Infinity,    rate:0.35},
+];
+const BH_RATE = 0.105;                       // tổng cá nhân đóng
+const R_BHXH = 0.08, R_BHYT = 0.015, R_BHTN = 0.01;  // BHXH 8% + BHYT 1,5% + BHTN 1%
+
+/* ===== Helpers ===== */
+const $ = id => document.getElementById(id);
+const fmt = n => Math.round(n).toLocaleString("vi-VN") + " đ";
+const parseNum = s => parseInt(String(s).replace(/[^\d]/g,""), 10) || 0;
+const fmtRange = (f,c) => c===Infinity ? `Trên ${(f/1e6)} tr` : `${(f/1e6)}–${(c/1e6)} tr`;
+
+let bhMode = "auto";
+let period = "month";                       // "month" hoặc "year"
+const MONTHS = () => period === "year" ? 12 : 1;
+const DEFAULTS = {
+  month: {income:30000000,  self:15500000,  dep:6200000},
+  year:  {income:360000000, self:186000000, dep:74400000},
+};
+function applyPeriodDefaults(){
+  const d = DEFAULTS[period];
+  $("income").value  = d.income.toLocaleString("vi-VN");
+  $("bhBase").value  = d.income.toLocaleString("vi-VN");
+  $("selfDed").value = d.self.toLocaleString("vi-VN");
+  $("depDed").value  = d.dep.toLocaleString("vi-VN");
+  const per = period === "year" ? "năm" : "tháng";
+  $("incomeLbl").textContent = "Tổng thu nhập chịu thuế / " + per;
+  $("unitHint").textContent  = "Đơn vị: đồng/" + per;
+  $("rTaxK").textContent     = "Thuế TNCN phải nộp / " + per;
+}
+/* chuyển kỳ tính thuế tháng/năm */
+$("modeTabs").addEventListener("click", e => {
+  const b = e.target.closest(".mt");
+  if(!b || b.dataset.period === period) return;
+  period = b.dataset.period;
+  [...b.parentNode.children].forEach(x => x.classList.toggle("on", x===b));
+  applyPeriodDefaults();
+  calc();
+});
+
+/* format money inputs live */
+function attachMoney(el){
+  el.addEventListener("input", () => {
+    const caretEnd = el.selectionStart === el.value.length;
+    const v = parseNum(el.value);
+    el.value = v ? v.toLocaleString("vi-VN") : "";
+    if(caretEnd) el.selectionStart = el.selectionEnd = el.value.length;
+    calc();
+  });
+}
+["income","bhBase","bhManual","selfDed","depDed"].forEach(id => attachMoney($(id)));
+
+/* BH mode segmented control */
+$("bhMode").addEventListener("click", e => {
+  const b = e.target.closest("button"); if(!b) return;
+  bhMode = b.dataset.mode;
+  [...$("bhMode").children].forEach(x => x.classList.toggle("on", x===b));
+  $("bhManualBox").style.display = bhMode==="manual" ? "block" : "none";
+  $("bhAutoBox").style.display   = bhMode==="auto"   ? "block" : "none";
+  calc();
+});
+
+/* dependants stepper */
+function setDeps(n){ $("deps").value = Math.max(0, n); calc(); }
+$("depPlus").addEventListener("click", () => setDeps(parseNum($("deps").value)+1));
+$("depMinus").addEventListener("click", () => setDeps(parseNum($("deps").value)-1));
+$("deps").addEventListener("input", () => { $("deps").value = $("deps").value.replace(/[^\d]/g,""); calc(); });
+
+/* advanced toggle */
+$("advToggle").addEventListener("click", () => {
+  $("adv").classList.toggle("show");
+  $("advToggle").classList.toggle("open");
+});
+$("advToggle").addEventListener("keydown", e => { if(e.key==="Enter"||e.key===" "){e.preventDefault();$("advToggle").click();} });
+
+/* reset */
+$("resetBtn").addEventListener("click", () => {
+  $("bhManual").value="0"; $("deps").value="0";
+  bhMode="auto"; [...$("bhMode").children].forEach((x,i)=>x.classList.toggle("on",i===0));
+  $("bhManualBox").style.display="none"; $("bhAutoBox").style.display="block";
+  applyPeriodDefaults();
+  calc();
+});
+$("printBtn").addEventListener("click", () => window.print());
+
+/* ===== Core calculation ===== */
+function calc(){
+  const m = MONTHS();                       // 1 nếu tính theo tháng, 12 nếu theo năm
+  const income  = parseNum($("income").value);
+  const deps    = parseNum($("deps").value);
+  const selfDed = parseNum($("selfDed").value);
+  const depDed  = parseNum($("depDed").value);
+  let ins;
+  if(bhMode === "auto"){
+    const base = parseNum($("bhBase").value);
+    const xh = base*R_BHXH, yt = base*R_BHYT, tn = base*R_BHTN;
+    ins = xh + yt + tn;
+    $("bhXH").textContent = fmt(xh);
+    $("bhYT").textContent = fmt(yt);
+    $("bhTN").textContent = fmt(tn);
+  } else {
+    ins = parseNum($("bhManual").value);
+  }
+
+  const totalDep = deps * depDed;
+  const taxable  = Math.max(0, income - ins - selfDed - totalDep);
+
+  /* thuế lũy tiến — ngưỡng từng bậc nhân với số tháng của kỳ tính thuế */
+  let tax = 0;
+  const rows = BRACKETS.map(b => {
+    const floor = b.floor * m, ceil = b.ceil * m;
+    const span = Math.max(0, Math.min(taxable, ceil) - floor);
+    const t = span * b.rate;
+    tax += t;
+    return {floor, ceil, rate:b.rate, span, t, active: taxable > floor && taxable > 0};
+  });
+
+  const net = income - ins - tax;
+  const eff = income > 0 ? (tax / income * 100) : 0;
+
+  /* paint summary */
+  $("rTax").textContent     = fmt(tax);
+  $("rTaxYear").textContent = period==="year"
+    ? "Bình quân/tháng: " + fmt(tax/12)
+    : "Cả năm: " + fmt(tax*12);
+  $("rNet").textContent     = fmt(net);
+  $("rTaxable").textContent = fmt(taxable);
+  $("effRate").textContent  = "Thuế suất hiệu dụng: " + eff.toFixed(1).replace(".",",") + "%";
+
+  /* paint breakdown */
+  $("bIncome").textContent  = fmt(income);
+  $("bIns").textContent     = "− " + fmt(ins);
+  $("bSelf").textContent    = "− " + fmt(selfDed);
+  $("bDep").textContent     = "− " + fmt(totalDep);
+  $("bDepLab").textContent  = `− Giảm trừ ${deps} người phụ thuộc`;
+  $("bTaxable").textContent = fmt(taxable);
+
+  /* paint bracket table */
+  $("brkBody").innerHTML = rows.map((r,i) => `
+    <tr class="${r.span<=0?'zero':''} ${r.active && r.span>0?'active':''}">
+      <td>Bậc ${i+1} · ${fmtRange(r.floor,r.ceil)}</td>
+      <td><span class="rate-pill">${(r.rate*100)}%</span></td>
+      <td>${fmt(r.t)}</td>
+    </tr>`).join("");
+  $("brkTotal").textContent = fmt(tax);
+}
+
+calc();
+</script>
 </body>
 </html>
