@@ -46,8 +46,9 @@
   .logo-img{height:38px;width:auto;display:block;}
   .divider{width:1px;height:34px;background:var(--line);flex-shrink:0;}
   .brand-sub{display:flex;flex-direction:column;line-height:1.15;min-width:0;}
-  .brand-sub b{font-size:15px;font-weight:800;}
-  .brand-sub span{font-size:11px;color:var(--muted);font-family:"JetBrains Mono",monospace;letter-spacing:.12em;text-transform:uppercase;}
+  .brand-sub b{font-size:18px;font-weight:800;letter-spacing:-.01em;}
+  .brand-sub .grad{background:var(--brand-grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+  .brand-sub > span{font-size:11px;color:var(--muted);font-family:"JetBrains Mono",monospace;letter-spacing:.12em;text-transform:uppercase;}
   .badge-year{font-family:"JetBrains Mono",monospace;font-size:12px;font-weight:700;color:var(--accent);background:var(--accent-soft);border:1px solid #C5D0F7;padding:6px 12px;border-radius:999px;white-space:nowrap;}
 
   /* ===== Hero ===== */
@@ -173,7 +174,10 @@
     <div class="brand">
       <img class="logo-img" src="logo-seongon.png" alt="SEONGON" />
       <span class="divider"></span>
-      <div class="brand-sub"><b>Kế toán</b><span>Công cụ thuế</span></div>
+      <div class="brand-sub">
+        <b>Kế toán</b>
+        <span>Công cụ thuế</span>
+      </div>
     </div>
     <span class="badge-year">Áp dụng 2026</span>
   </div>
@@ -206,11 +210,20 @@
       <div class="card-body">
 
         <div class="field">
-          <label class="lbl" for="income" id="incomeLbl">Tổng thu nhập chịu thuế / tháng</label>
+          <label class="lbl" for="income" id="incomeLbl">Tổng thu nhập / tháng</label>
           <div class="money-input">
             <input id="income" inputmode="numeric" value="30.000.000" aria-describedby="income-h" />
             <span class="unit">đ</span>
           </div>
+        </div>
+
+        <div class="field">
+          <label class="lbl" for="exempt" id="exemptLbl">Thu nhập miễn thuế / tháng <span class="opt">(nếu có)</span></label>
+          <div class="money-input">
+            <input id="exempt" inputmode="numeric" value="0" />
+            <span class="unit">đ</span>
+          </div>
+          <p class="hint" style="margin-top:8px;">Các khoản được miễn: phần phụ trội tiền làm thêm giờ/ban đêm, ăn ca trong mức, phụ cấp điện thoại, công tác phí… Sẽ được trừ ra trước khi tính thuế.</p>
         </div>
 
         <div class="field">
@@ -292,6 +305,7 @@
 
         <div class="breakdown" id="breakdown">
           <div class="brk-line"><span class="lab">Tổng thu nhập</span><span class="val num" id="bIncome">0 đ</span></div>
+          <div class="brk-line minus"><span class="lab">− Thu nhập miễn thuế</span><span class="val num" id="bExempt">0 đ</span></div>
           <div class="brk-line minus"><span class="lab">− Bảo hiểm bắt buộc (cá nhân đóng)</span><span class="val num" id="bIns">0 đ</span></div>
           <div class="brk-line minus"><span class="lab">− Giảm trừ bản thân</span><span class="val num" id="bSelf">0 đ</span></div>
           <div class="brk-line minus"><span class="lab" id="bDepLab">− Giảm trừ người phụ thuộc</span><span class="val num" id="bDep">0 đ</span></div>
@@ -367,7 +381,8 @@ function applyPeriodDefaults(){
   $("selfDed").value = d.self.toLocaleString("vi-VN");
   $("depDed").value  = d.dep.toLocaleString("vi-VN");
   const per = period === "year" ? "năm" : "tháng";
-  $("incomeLbl").textContent = "Tổng thu nhập chịu thuế / " + per;
+  $("incomeLbl").textContent = "Tổng thu nhập / " + per;
+  $("exemptLbl").innerHTML   = 'Thu nhập miễn thuế / ' + per + ' <span class="opt">(nếu có)</span>';
   $("unitHint").textContent  = "Đơn vị: đồng/" + per;
   $("rTaxK").textContent     = "Thuế TNCN phải nộp / " + per;
 }
@@ -391,7 +406,7 @@ function attachMoney(el){
     calc();
   });
 }
-["income","bhBase","bhManual","selfDed","depDed"].forEach(id => attachMoney($(id)));
+["income","exempt","bhBase","bhManual","selfDed","depDed"].forEach(id => attachMoney($(id)));
 
 /* BH mode segmented control */
 $("bhMode").addEventListener("click", e => {
@@ -418,7 +433,7 @@ $("advToggle").addEventListener("keydown", e => { if(e.key==="Enter"||e.key===" 
 
 /* reset */
 $("resetBtn").addEventListener("click", () => {
-  $("bhManual").value="0"; $("deps").value="0";
+  $("bhManual").value="0"; $("deps").value="0"; $("exempt").value="0";
   bhMode="auto"; [...$("bhMode").children].forEach((x,i)=>x.classList.toggle("on",i===0));
   $("bhManualBox").style.display="none"; $("bhAutoBox").style.display="block";
   applyPeriodDefaults();
@@ -430,6 +445,7 @@ $("printBtn").addEventListener("click", () => window.print());
 function calc(){
   const m = MONTHS();                       // 1 nếu tính theo tháng, 12 nếu theo năm
   const income  = parseNum($("income").value);
+  const exempt  = parseNum($("exempt").value);
   const deps    = parseNum($("deps").value);
   const selfDed = parseNum($("selfDed").value);
   const depDed  = parseNum($("depDed").value);
@@ -446,7 +462,7 @@ function calc(){
   }
 
   const totalDep = deps * depDed;
-  const taxable  = Math.max(0, income - ins - selfDed - totalDep);
+  const taxable  = Math.max(0, income - exempt - ins - selfDed - totalDep);
 
   /* thuế lũy tiến — ngưỡng từng bậc nhân với số tháng của kỳ tính thuế */
   let tax = 0;
@@ -472,6 +488,7 @@ function calc(){
 
   /* paint breakdown */
   $("bIncome").textContent  = fmt(income);
+  $("bExempt").textContent  = "− " + fmt(exempt);
   $("bIns").textContent     = "− " + fmt(ins);
   $("bSelf").textContent    = "− " + fmt(selfDed);
   $("bDep").textContent     = "− " + fmt(totalDep);
